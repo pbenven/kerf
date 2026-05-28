@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kerf — Sheet Goods Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222;--border:#2e2e2e;
+  --accent:#e8c547;--accent2:#c9a82f;--danger:#e05252;--success:#52c97a;
+  --muted:#666;--text:#e8e8e8;--text2:#aaa;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --display:'Bebas Neue',sans-serif;--radius:4px;--panel:290px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+/* ── Base: body is a vertical flex column filling the viewport ── */
+html,body{height:100%;height:100dvh;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:13px;line-height:1.5;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ── Header ── */
+header{
+  background:var(--surface);border-bottom:2px solid var(--accent);
+  padding:0 20px;display:flex;align-items:center;gap:14px;
+  height:52px;flex-shrink:0;
+}
+header h1{font-family:var(--display);font-size:28px;letter-spacing:3px;
+  color:var(--accent);line-height:1;}
+.header-sub{color:var(--muted);font-family:var(--mono);font-size:11px;
+  border-left:1px solid var(--border);padding-left:14px;}
+.header-actions{margin-left:auto;display:flex;gap:6px;align-items:center;}
+
+/* ── Desktop workspace: 3-column grid ── */
+.workspace{
+  flex:1;min-height:0;
+  display:grid;
+  grid-template-columns:var(--panel) 1fr var(--panel);
+  overflow:hidden;
+}
+
+/* ── Panels (left & right) ── */
+.panel{
+  background:var(--surface);display:flex;flex-direction:column;
+  overflow:hidden;border-right:1px solid var(--border);
+}
+.panel.panel-right{border-right:none;border-left:1px solid var(--border);}
+.panel-hd{
+  padding:10px 14px 8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.panel-title{font-family:var(--display);font-size:16px;
+  letter-spacing:2px;color:var(--accent);}
+.panel-body{flex:1;overflow-y:auto;padding:12px;}
+.panel-body::-webkit-scrollbar{width:4px;}
+.panel-body::-webkit-scrollbar-track{background:var(--bg);}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── Canvas (centre) ── */
+.canvas-area{
+  display:flex;flex-direction:column;overflow:hidden;background:var(--bg);
+}
+.canvas-toolbar{
+  padding:8px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--surface);
+}
+.canvas-scroll{flex:1;overflow:auto;padding:20px;}
+.canvas-scroll::-webkit-scrollbar{width:6px;height:6px;}
+.canvas-scroll::-webkit-scrollbar-track{background:var(--bg);}
+.canvas-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ── Buttons ── */
+.btn{
+  font-family:var(--mono);font-size:11px;padding:5px 12px;
+  border-radius:var(--radius);border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);cursor:pointer;
+  transition:all .15s;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn-primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2);color:#000;}
+.btn-danger:hover{border-color:var(--danger);color:var(--danger);}
+.btn-sm{padding:3px 8px;font-size:10px;}
+.btn-icon{width:26px;height:26px;padding:0;display:flex;
+  align-items:center;justify-content:center;font-size:14px;}
+
+/* ── Forms ── */
+label{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+input[type=text],input[type=number],select{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--text);font-family:var(--mono);
+  font-size:12px;padding:5px 8px;outline:none;transition:border-color .15s;
+}
+input:focus,select:focus{border-color:var(--accent);}
+input::placeholder{color:#3a3a3a;font-style:italic;}
+select option{background:var(--surface);}
+.field{margin-bottom:10px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+
+/* ── Cards ── */
+.card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px 10px;margin-bottom:6px;
+  transition:border-color .15s;
+}
+.card:hover{border-color:#444;}
+.card.editing{border-color:var(--accent);}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.card-label{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;}
+.card-dims{font-family:var(--mono);font-size:11px;color:var(--text2);}
+.card-meta{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.card-actions{display:flex;gap:4px;}
+.part-num{font-family:var(--mono);font-size:10px;background:var(--border);
+  padding:1px 5px;border-radius:3px;color:var(--text2);margin-right:4px;}
+.edit-form{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+
+/* ── Sections ── */
+.sec{font-family:var(--mono);font-size:10px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1px;
+  padding:8px 0 6px;border-top:1px solid var(--border);margin-top:8px;}
+.sec:first-child{border-top:none;margin-top:0;padding-top:0;}
+.radio-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.radio-row{display:flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:var(--mono);font-size:11px;color:var(--text2);}
+.radio-row input{accent-color:var(--accent);width:auto;}
+.radio-row:hover{color:var(--text);}
+
+/* ── Stats bar ── */
+.stats-bar{
+  display:flex;gap:16px;padding:6px 16px;background:var(--surface2);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+  font-family:var(--mono);font-size:11px;flex-wrap:wrap;
+}
+.stat{display:flex;align-items:center;gap:5px;}
+.stat-lbl{color:var(--muted);}
+.stat-val{color:var(--accent);font-weight:500;}
+.stat-val.danger{color:var(--danger);}
+.stat-val.success{color:var(--success);}
+
+/* ── Diagrams ── */
+.diagram-wrap{display:flex;flex-direction:column;gap:20px;}
+.diagram-board{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px;overflow-x:auto;
+}
+.diagram-hd{
+  font-family:var(--mono);font-size:11px;color:var(--text2);
+  margin-bottom:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+}
+.util-badge{background:var(--surface2);border:1px solid var(--border);
+  padding:1px 7px;border-radius:20px;font-size:10px;}
+.util-badge.good{border-color:var(--success);color:var(--success);}
+.util-badge.ok{border-color:var(--accent);color:var(--accent);}
+.util-badge.poor{border-color:var(--danger);color:var(--danger);}
+svg.board-svg{display:block;border-radius:2px;max-width:100%;}
+
+/* ── Misc ── */
+.unplaced-item{
+  font-family:var(--mono);font-size:11px;color:var(--danger);
+  padding:4px 8px;background:rgba(224,82,82,.08);
+  border:1px solid rgba(224,82,82,.2);border-radius:var(--radius);margin-bottom:4px;
+}
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;height:100%;gap:12px;color:var(--muted);
+  font-family:var(--mono);font-size:12px;text-align:center;padding:40px;
+}
+.empty-icon{font-size:48px;opacity:.3;}
+.add-form{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:10px;margin-bottom:10px;
+}
+.add-form-title{font-family:var(--mono);font-size:10px;color:var(--accent);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.solving-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.75);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:24px;letter-spacing:4px;
+  color:var(--accent);z-index:100;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.solving-overlay span{animation:pulse 1s infinite;}
+
+/* ── Modal ── */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;
+}
+.modal h2{font-family:var(--display);font-size:22px;letter-spacing:2px;
+  color:var(--accent);margin-bottom:4px;}
+.modal p{font-size:12px;color:var(--text2);margin-bottom:14px;}
+.modal textarea{
+  width:100%;height:160px;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--text);font-family:var(--mono);
+  font-size:11px;padding:8px;outline:none;resize:vertical;margin-bottom:10px;
+}
+.modal textarea:focus{border-color:var(--accent);}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+.import-hint{
+  font-family:var(--mono);font-size:10px;color:var(--muted);
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px;margin-bottom:12px;line-height:1.8;
+}
+.import-error{
+  font-family:var(--mono);font-size:11px;color:var(--danger);
+  background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2);
+  border-radius:var(--radius);padding:8px;margin-bottom:8px;display:none;
+}
+
+/* ── Settings drawer ── */
+.drawer-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:150;display:none;
+}
+.drawer-backdrop.open{display:block;}
+.drawer{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-top:2px solid var(--accent);
+  border-radius:12px 12px 0 0;padding:16px 16px 32px;
+  z-index:160;transform:translateY(100%);transition:transform .3s ease;
+  max-height:80vh;overflow-y:auto;
+}
+.drawer.open{transform:translateY(0);}
+.drawer-grip{
+  width:40px;height:4px;background:var(--border);
+  border-radius:2px;margin:0 auto 16px;
+}
+.drawer h3{font-family:var(--display);font-size:18px;letter-spacing:2px;
+  color:var(--accent);margin-bottom:12px;}
+
+/* ── Mobile tab bar — hidden by default ── */
+.tab-bar{display:none;}
+
+/* ══════════════════════════════════════
+   TABLET 601–900px
+══════════════════════════════════════ */
+@media(min-width:601px) and (max-width:900px){
+  :root{--panel:240px;}
+  .header-sub{display:none;}
+  .workspace{grid-template-columns:var(--panel) 1fr;}
+  .panel-right{display:none;}
+}
+
+/* ══════════════════════════════════════
+   MOBILE ≤600px
+   
+   Key principle: NO position:fixed on tab bar.
+   NO position:absolute on panes.
+   NO calc(100vh ...) anywhere.
+   Everything is flex. Body fills dvh.
+   Tab bar is the last flex child of body.
+══════════════════════════════════════ */
+@media(max-width:600px){
+
+  html,body{height:100%;height:100dvh;}
+
+  header{padding:0 12px;gap:8px;height:48px;}
+  header h1{font-size:22px;}
+  .header-sub{display:none;}
+  .header-actions .btn:not(.btn-primary):not(.hdr-keep){display:none;}
+
+  /* Workspace becomes a single flex pane container */
+  .workspace{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    min-height:0;
+    overflow:hidden;
+    /* No grid, no absolute, no fixed heights */
+  }
+
+  /* All three panes are flex children; only active shows */
+  .workspace > .panel,
+  .workspace > .canvas-area{
+    display:none;
+    flex-direction:column;
+    flex:1;
+    min-height:0;
+    overflow:hidden;
+    /* Reset any desktop border */
+    border:none;
+  }
+  .workspace > .panel.tab-active,
+  .workspace > .canvas-area.tab-active{
+    display:flex;
+  }
+
+  /* Panel header hidden — tab bar is navigation */
+  .panel-hd{display:none;}
+
+  /* Panel body scrolls */
+  .panel-body{
+    flex:1;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:16px;
+  }
+
+  /* Canvas scroll */
+  .canvas-scroll{
+    flex:1;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:12px;
+  }
+
+  /* Larger touch targets */
+  input[type=text],input[type=number],select{font-size:16px;padding:9px 10px;}
+  .btn{padding:9px 14px;font-size:12px;}
+  .btn-icon{width:36px;height:36px;font-size:16px;}
+  .card{padding:10px 12px;}
+  .stats-bar{font-size:10px;gap:8px;padding:5px 12px;}
+
+  /* Tab bar: normal flow, last child of body */
+  .tab-bar{
+    display:flex;
+    height:56px;
+    background:var(--surface);
+    border-top:2px solid var(--accent);
+    flex-shrink:0;
+    /* NOT position:fixed — sits naturally at bottom of body flex column */
+  }
+  .tab-btn{
+    flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;
+    background:none;border:none;color:var(--muted);
+    font-family:var(--mono);font-size:9px;
+    text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:6px 0;
+    transition:color .15s;
+  }
+  .tab-btn .ti{font-size:20px;line-height:1;}
+  .tab-btn.active{color:var(--accent);}
+}
+
+/* ── Print ── */
+@media print{
+  body{overflow:visible;height:auto;}
+  header,.workspace,.tab-bar,.drawer,.drawer-backdrop{display:none!important;}
+  .print-doc{display:block!important;}
+  .diagram-board{border:1px solid #ccc;break-inside:avoid;margin-bottom:16px;}
+}
+.print-doc{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>KERF</h1>
+  <p class="header-sub">Sheet Goods &amp; Board Optimizer</p>
+  <div class="header-actions">
+    <button class="btn" onclick="showImport()">⬆ Import</button>
+    <button class="btn" onclick="exportCSV()">⬇ Export</button>
+    <button class="btn" onclick="downloadSampleCSV()">⬇ Sample</button>
+    <button class="btn" onclick="loadSample()">Sample</button>
+    <button class="btn" onclick="clearAll()">Clear</button>
+    <button class="btn hdr-keep" onclick="openDrawer()">⚙</button>
+    <button class="btn" onclick="printCutList()">🖨 Print</button>
+    <button class="btn btn-primary hdr-keep" onclick="runSolve()">▶ Optimize</button>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- LEFT / STOCK tab -->
+  <div class="panel tab-active" id="pane-stock">
+    <div class="panel-hd">
+      <span class="panel-title">STOCK</span>
+      <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">Available material</span>
+    </div>
+    <div class="panel-body">
+      <div class="add-form">
+        <div class="add-form-title">Add Stock Board</div>
+        <div class="field"><label>Label / Species</label>
+          <input type="text" id="s-label" placeholder='e.g. "Oak 4×8"'></div>
+        <div class="row2">
+          <div class="field"><label>Length (in)</label>
+            <input type="number" id="s-len" step="0.0625" min="0.125" placeholder="96"></div>
+          <div class="field"><label>Width (in)</label>
+            <input type="number" id="s-wid" step="0.0625" min="0.125" placeholder="48"></div>
+        </div>
+        <div class="field"><label>Qty</label>
+          <input type="number" id="s-qty" min="1" value="1"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="addStock()">+ Add Stock</button>
+      </div>
+      <div id="stock-list"></div>
+    </div>
+  </div>
+
+  <!-- CENTRE / RESULTS tab -->
+  <div class="canvas-area" id="pane-results" style="position:relative">
+    <div id="solving-overlay" class="solving-overlay" style="display:none">
+      <span>SOLVING…</span>
+    </div>
+    <div class="canvas-toolbar">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">ZOOM</span>
+      <input type="range" id="zoom-slider" min="2" max="20" value="8" step="0.5"
+        style="width:90px;accent-color:var(--accent)" oninput="renderDiagrams()">
+      <span id="zoom-label"
+        style="font-family:var(--mono);font-size:11px;color:var(--accent);width:44px">8 px/in</span>
+      <div style="flex:1"></div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">inches</span>
+    </div>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-lbl">Parts:</span><span class="stat-val" id="s-total">—</span></div>
+      <div class="stat"><span class="stat-lbl">Placed:</span><span class="stat-val success" id="s-placed">—</span></div>
+      <div class="stat"><span class="stat-lbl">Unplaced:</span><span class="stat-val danger" id="s-unplaced">—</span></div>
+      <div class="stat"><span class="stat-lbl">Boards:</span><span class="stat-val" id="s-boards">—</span></div>
+      <div class="stat"><span class="stat-lbl">Util:</span><span class="stat-val" id="s-util">—</span></div>
+    </div>
+    <div class="canvas-scroll">
+      <div id="canvas-content">
+        <div class="empty-state">
+          <div class="empty-icon">🪵</div>
+          <div>Add stock and parts,<br>then click <strong style="color:var(--accent)">Optimize</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT / PARTS tab -->
+  <div class="panel panel-right" id="pane-parts">
+    <div class="panel-hd">
+      <span class="panel-title">PARTS &amp; SETTINGS</span>
+    </div>
+    <div class="panel-body">
+      <div class="sec">Cut Settings</div>
+      <div class="row2">
+        <div class="field"><label>Kerf (in)</label>
+          <input type="number" id="kerf" value="0.125" step="0.0625" min="0"></div>
+        <div class="field"><label>Min waste (in²)</label>
+          <input type="number" id="min-waste" value="4" step="0.5" min="0"></div>
+      </div>
+      <div class="field"><label>Strategy</label>
+        <div class="radio-group">
+          <label class="radio-row"><input type="radio" name="strategy" value="combination" checked>
+            Combination (recommended)</label>
+          <label class="radio-row"><input type="radio" name="strategy" value="crosscut_first">
+            Cross-cuts first</label>
+          <label class="radio-row"><input type="radio" name="strategy" value="ripcut_first">
+            Rip-cuts first</label>
+        </div>
+      </div>
+      <div class="field">
+        <label class="radio-row" style="text-transform:none;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="allow-rotate" checked style="accent-color:var(--accent);width:auto">
+          &nbsp;Allow 90° rotation (ignore grain)
+        </label>
+      </div>
+      <div class="sec">Required Parts</div>
+      <div class="add-form">
+        <div class="add-form-title">Add Part</div>
+        <div class="field"><label>Name / Description</label>
+          <input type="text" id="p-name" placeholder='e.g. "Shelf"'></div>
+        <div class="row2">
+          <div class="field"><label>Length (in)</label>
+            <input type="number" id="p-len" step="0.0625" min="0.125" placeholder="24"></div>
+          <div class="field"><label>Width (in)</label>
+            <input type="number" id="p-wid" step="0.0625" min="0.125" placeholder="12"></div>
+        </div>
+        <div class="field"><label>Quantity</label>
+          <input type="number" id="p-qty" min="1" value="1"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="addPart()">+ Add Part</button>
+      </div>
+      <div id="parts-list"></div>
+      <div class="sec">Unplaced Parts</div>
+      <div id="unplaced-list">
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">
+          Run optimizer to see results.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .workspace -->
+
+<!-- Tab bar — last child of body, natural flow, NOT fixed -->
+<nav class="tab-bar">
+  <button class="tab-btn active" id="tab-stock" onclick="switchTab('stock')">
+    <span class="ti">🪵</span>Stock
+  </button>
+  <button class="tab-btn" id="tab-parts" onclick="switchTab('parts')">
+    <span class="ti">📐</span>Parts
+  </button>
+  <button class="tab-btn" id="tab-results" onclick="switchTab('results')">
+    <span class="ti">📊</span>Results
+  </button>
+</nav>
+
+<!-- Settings drawer -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-grip"></div>
+  <h3>SETTINGS</h3>
+  <div class="row2">
+    <div class="field"><label>Kerf (in)</label>
+      <input type="number" id="d-kerf" value="0.125" step="0.0625" min="0"
+        oninput="document.getElementById('kerf').value=this.value"></div>
+    <div class="field"><label>Min waste (in²)</label>
+      <input type="number" id="d-min-waste" value="4" step="0.5" min="0"
+        oninput="document.getElementById('min-waste').value=this.value"></div>
+  </div>
+  <div class="field"><label>Strategy</label>
+    <select id="d-strategy"
+      onchange="document.querySelector('input[name=strategy][value=\''+this.value+'\']').checked=true">
+      <option value="combination">Combination (recommended)</option>
+      <option value="crosscut_first">Cross-cuts first</option>
+      <option value="ripcut_first">Rip-cuts first</option>
+    </select>
+  </div>
+  <div class="field">
+    <label class="radio-row" style="text-transform:none;font-size:14px;cursor:pointer">
+      <input type="checkbox" id="d-rotate" checked
+        style="accent-color:var(--accent);width:auto"
+        onchange="document.getElementById('allow-rotate').checked=this.checked">
+      &nbsp;Allow 90° rotation (ignore grain)
+    </label>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button class="btn" style="flex:1" onclick="showImport();closeDrawer()">⬆ Import</button>
+    <button class="btn" style="flex:1" onclick="exportCSV();closeDrawer()">⬇ Export</button>
+    <button class="btn" style="flex:1" onclick="printCutList();closeDrawer()">🖨 Print</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <button class="btn" style="flex:1" onclick="loadSample();closeDrawer()">Load Sample</button>
+    <button class="btn btn-danger" style="flex:1" onclick="clearAll();closeDrawer()">Clear All</button>
+  </div>
+  <button class="btn btn-primary"
+    style="width:100%;margin-top:12px;padding:12px"
+    onclick="closeDrawer();runSolve()">▶ Optimize</button>
+</div>
+
+<!-- Import modal -->
+<div id="import-modal" class="modal-backdrop" style="display:none"
+  onclick="if(event.target===this)closeImport()">
+  <div class="modal">
+    <h2>IMPORT CSV</h2>
+    <p>Paste CSV data below, or drag &amp; drop a .csv file.</p>
+    <div class="import-hint">
+      <strong>Format:</strong><br>
+      type, label/name, length, width, qty<br><br>
+      stock, Plywood 4×8, 96, 48, 2<br>
+      part, Side Panel, 72, 11.25, 2<br><br>
+      • Header row auto-detected and skipped<br>
+      • type must be "stock" or "part"
+    </div>
+    <div id="import-error" class="import-error"></div>
+    <textarea id="import-textarea" placeholder="Paste CSV here…"
+      ondragover="event.preventDefault()" ondrop="handleDrop(event)"></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeImport()">Cancel</button>
+      <button class="btn btn-primary" onclick="doImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let stocks=[],parts=[],lastResult=null,serialMap={};
+let idSeq=1,partSeq=1;
+const uid=()=>'id'+(idSeq++);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const COLORS=['#4a9eff','#52c97a','#e8c547','#e05252','#b06af0',
+  '#ff7b5a','#5ae8d4','#f07a6a','#7ab8f5','#c5e86b',
+  '#f5a742','#9b6af0','#42d4f5','#f542b0','#6af07a'];
+let colorMap={};
+const color=pid=>{
+  if(!colorMap[pid])colorMap[pid]=COLORS[Object.keys(colorMap).length%COLORS.length];
+  return colorMap[pid];
+};
+const getKerf    =()=>parseFloat(document.getElementById('kerf').value)||0.125;
+const getMinWaste=()=>parseFloat(document.getElementById('min-waste').value)||0;
+const getRotate  =()=>document.getElementById('allow-rotate').checked;
+const getStrategy=()=>document.querySelector('input[name=strategy]:checked').value;
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+const PANES={stock:'pane-stock',parts:'pane-parts',results:'pane-results'};
+function switchTab(name){
+  Object.values(PANES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.classList.remove('tab-active');
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const pane=document.getElementById(PANES[name]);
+  if(pane)pane.classList.add('tab-active');
+  const tab=document.getElementById('tab-'+name);
+  if(tab)tab.classList.add('active');
+}
+
+// ─── Drawer ───────────────────────────────────────────────────────────────────
+function openDrawer(){
+  document.getElementById('d-kerf').value=document.getElementById('kerf').value;
+  document.getElementById('d-min-waste').value=document.getElementById('min-waste').value;
+  document.getElementById('d-strategy').value=getStrategy();
+  document.getElementById('d-rotate').checked=getRotate();
+  document.getElementById('drawer-backdrop').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer-backdrop').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+// ─── Stock ────────────────────────────────────────────────────────────────────
+function addStock(){
+  const label=document.getElementById('s-label').value.trim()||'Board';
+  const len=parseFloat(document.getElementById('s-len').value);
+  const wid=parseFloat(document.getElementById('s-wid').value);
+  const qty=parseInt(document.getElementById('s-qty').value)||1;
+  if(!len||!wid||len<=0||wid<=0)return alert('Enter valid dimensions.');
+  for(let i=0;i<qty;i++)
+    stocks.push({id:uid(),label:label+(qty>1?` #${i+1}`:''),length:len,width:wid});
+  document.getElementById('s-label').value='';
+  document.getElementById('s-len').value='';
+  document.getElementById('s-wid').value='';
+  document.getElementById('s-qty').value='1';
+  renderStockList();
+}
+function removeStock(id){stocks=stocks.filter(s=>s.id!==id);renderStockList();}
+function saveStockEdit(id){
+  const s=stocks.find(x=>x.id===id);if(!s)return;
+  s.label=document.getElementById(`se-lbl-${id}`).value.trim()||s.label;
+  s.length=parseFloat(document.getElementById(`se-len-${id}`).value)||s.length;
+  s.width=parseFloat(document.getElementById(`se-wid-${id}`).value)||s.width;
+  renderStockList();
+}
+function toggleEditStock(id){
+  const f=document.getElementById(`sef-${id}`);
+  const c=document.getElementById(`sc-${id}`);
+  const open=f.style.display==='none';
+  f.style.display=open?'block':'none';
+  c.classList.toggle('editing',open);
+}
+function renderStockList(){
+  const el=document.getElementById('stock-list');
+  if(!stocks.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;padding:12px">No stock added yet.</div>';
+    return;
+  }
+  el.innerHTML=stocks.map(s=>`
+    <div class="card" id="sc-${s.id}">
+      <div class="card-hd">
+        <span class="card-label">${esc(s.label)}</span>
+        <div class="card-actions">
+          <button class="btn btn-icon btn-sm" onclick="toggleEditStock('${s.id}')" title="Edit">✎</button>
+          <button class="btn btn-icon btn-danger btn-sm" onclick="removeStock('${s.id}')" title="Remove">✕</button>
+        </div>
+      </div>
+      <div class="card-dims">${s.length}" × ${s.width}"</div>
+      <div class="card-meta">${(s.length*s.width/144).toFixed(2)} sq ft</div>
+      <div class="edit-form" id="sef-${s.id}" style="display:none">
+        <div class="field"><label>Label</label>
+          <input type="text" id="se-lbl-${s.id}" value="${esc(s.label)}"></div>
+        <div class="row2">
+          <div class="field"><label>Length</label>
+            <input type="number" id="se-len-${s.id}" step="0.0625" value="${s.length}"></div>
+          <div class="field"><label>Width</label>
+            <input type="number" id="se-wid-${s.id}" step="0.0625" value="${s.width}"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="width:100%"
+          onclick="saveStockEdit('${s.id}')">Save</button>
+      </div>
+    </div>`).join('');
+}
+
+// ─── Parts ────────────────────────────────────────────────────────────────────
+function addPart(){
+  const name=document.getElementById('p-name').value.trim()||'Part';
+  const len=parseFloat(document.getElementById('p-len').value);
+  const wid=parseFloat(document.getElementById('p-wid').value);
+  const qty=parseInt(document.getElementById('p-qty').value)||1;
+  if(!len||!wid||len<=0||wid<=0)return alert('Enter valid dimensions.');
+  const id=uid();
+  parts.push({id,name,length:len,width:wid,qty,num:partSeq++});
+  color(id);
+  document.getElementById('p-name').value='';
+  document.getElementById('p-len').value='';
+  document.getElementById('p-wid').value='';
+  document.getElementById('p-qty').value='1';
+  renderPartsList();
+}
+function removePart(id){parts=parts.filter(p=>p.id!==id);renderPartsList();}
+function savePartEdit(id){
+  const p=parts.find(x=>x.id===id);if(!p)return;
+  p.name=document.getElementById(`pe-nam-${id}`).value.trim()||p.name;
+  p.length=parseFloat(document.getElementById(`pe-len-${id}`).value)||p.length;
+  p.width=parseFloat(document.getElementById(`pe-wid-${id}`).value)||p.width;
+  p.qty=parseInt(document.getElementById(`pe-qty-${id}`).value)||p.qty;
+  renderPartsList();
+}
+function toggleEditPart(id){
+  const f=document.getElementById(`pef-${id}`);
+  const c=document.getElementById(`pc-${id}`);
+  const open=f.style.display==='none';
+  f.style.display=open?'block':'none';
+  c.classList.toggle('editing',open);
+}
+function renderPartsList(){
+  const el=document.getElementById('parts-list');
+  if(!parts.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;padding:12px">No parts added yet.</div>';
+    return;
+  }
+  el.innerHTML=parts.map(p=>`
+    <div class="card" id="pc-${p.id}" style="border-left:3px solid ${color(p.id)}">
+      <div class="card-hd">
+        <span><span class="part-num">#${p.num}</span>
+          <span class="card-label" style="color:${color(p.id)}">${esc(p.name)}</span></span>
+        <div class="card-actions">
+          <button class="btn btn-icon btn-sm" onclick="toggleEditPart('${p.id}')" title="Edit">✎</button>
+          <button class="btn btn-icon btn-danger btn-sm" onclick="removePart('${p.id}')" title="Remove">✕</button>
+        </div>
+      </div>
+      <div class="card-dims">${p.length}" × ${p.width}" <span style="color:var(--muted)">× ${p.qty}</span></div>
+      <div class="card-meta">${(p.length*p.width*p.qty/144).toFixed(2)} sq ft total</div>
+      <div class="edit-form" id="pef-${p.id}" style="display:none">
+        <div class="field"><label>Name</label>
+          <input type="text" id="pe-nam-${p.id}" value="${esc(p.name)}"></div>
+        <div class="row2">
+          <div class="field"><label>Length</label>
+            <input type="number" id="pe-len-${p.id}" step="0.0625" value="${p.length}"></div>
+          <div class="field"><label>Width</label>
+            <input type="number" id="pe-wid-${p.id}" step="0.0625" value="${p.width}"></div>
+        </div>
+        <div class="field"><label>Qty</label>
+          <input type="number" id="pe-qty-${p.id}" min="1" value="${p.qty}"></div>
+        <button class="btn btn-primary btn-sm" style="width:100%"
+          onclick="savePartEdit('${p.id}')">Save</button>
+      </div>
+    </div>`).join('');
+}
+
+// ─── Solve ────────────────────────────────────────────────────────────────────
+async function runSolve(){
+  if(!stocks.length)return alert('Add at least one stock board.');
+  if(!parts.length)return alert('Add at least one required part.');
+  if(window.innerWidth<=600)switchTab('results');
+  document.getElementById('solving-overlay').style.display='flex';
+  try{
+    const res=await fetch('/solve',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({stocks,parts,kerf:getKerf(),min_waste:getMinWaste(),
+        allow_rotate:getRotate(),strategy:getStrategy()})
+    });
+    const data=await res.json();
+    document.getElementById('solving-overlay').style.display='none';
+    if(data.error){alert(data.error);return;}
+    lastResult=data;
+    assignSerials(data.results);
+    updateStats(data);
+    renderDiagrams();
+    renderUnplaced(data.unplaced);
+  }catch(e){
+    document.getElementById('solving-overlay').style.display='none';
+    alert('Error: '+e.message);
+  }
+}
+function updateStats(d){
+  document.getElementById('s-total').textContent=d.total_parts;
+  document.getElementById('s-placed').textContent=d.placed_count;
+  const u=document.getElementById('s-unplaced');
+  u.textContent=d.unplaced_count;
+  u.className='stat-val '+(d.unplaced_count>0?'danger':'success');
+  document.getElementById('s-boards').textContent=d.results.length;
+  if(d.results.length){
+    const avg=d.results.reduce((a,r)=>a+r.utilization,0)/d.results.length;
+    document.getElementById('s-util').textContent=avg.toFixed(1)+'%';
+  }
+}
+
+// ─── Serials ──────────────────────────────────────────────────────────────────
+function assignSerials(results){
+  serialMap={};let n=1;
+  for(let bi=0;bi<results.length;bi++)
+    for(let pi=0;pi<results[bi].placed.length;pi++)
+      serialMap[`${bi}:${pi}`]=n++;
+}
+const serial=(bi,pi)=>serialMap[`${bi}:${pi}`]||'?';
+const partName=pid=>{const p=parts.find(x=>x.id===pid);return p?p.name:pid;};
+
+// ─── Diagrams ─────────────────────────────────────────────────────────────────
+function renderDiagrams(){
+  if(!lastResult)return;
+  const scale=parseFloat(document.getElementById('zoom-slider').value);
+  document.getElementById('zoom-label').textContent=scale+' px/in';
+  const wrap=document.getElementById('canvas-content');
+  if(!lastResult.results.length){
+    wrap.innerHTML='<div class="empty-state"><div class="empty-icon">❌</div><div>No solution found.<br>Add more or larger stock boards.</div></div>';
+    return;
+  }
+  wrap.innerHTML='<div class="diagram-wrap">'+
+    lastResult.results.map((r,i)=>boardSVG(r,scale,i+1)).join('')+'</div>';
+}
+function boardSVG(r,scale,idx){
+  const W=r.stock_length*scale,H=r.stock_width*scale;
+  const uc=r.utilization>=80?'good':r.utilization>=60?'ok':'poor';
+  let g=`<defs><pattern id="gr-${r.stock_id}" x="0" y="0" width="4" height="30"
+    patternUnits="userSpaceOnUse">
+    <line x1="0" y1="0" x2="0" y2="30" stroke="#2a2218" stroke-width="1" opacity=".5"/>
+    <line x1="2" y1="0" x2="2" y2="30" stroke="#2a2218" stroke-width=".5" opacity=".3"/>
+  </pattern></defs>
+  <rect width="${W}" height="${H}" fill="#1e1608" rx="2"/>
+  <rect width="${W}" height="${H}" fill="url(#gr-${r.stock_id})" rx="2"/>
+  <rect width="${W}" height="${H}" fill="none" stroke="#3a2e1a" rx="2"/>`;
+  for(let pi=0;pi<r.placed.length;pi++){
+    const p=r.placed[pi];
+    const x=p.x*scale,y=p.y*scale,pw=p.length*scale,ph=p.width*scale;
+    const c=color(p.part_id),sn=serial(idx-1,pi);
+    const pn=p.name||partName(p.part_id);
+    const fs=Math.min(11,Math.max(7,pw/8,ph/4));
+    g+=`<rect x="${x+1}" y="${y+1}" width="${pw-2}" height="${ph-2}"
+      fill="${c}22" stroke="${c}" stroke-width="1.5" rx="2"/>`;
+    if(pw>20&&ph>14){
+      g+=`<rect x="${x+3}" y="${y+3}" width="${Math.min(22,pw-6)}" height="13"
+        fill="${c}33" rx="2"/>
+      <text x="${x+6}" y="${y+13}" font-family="IBM Plex Mono,monospace"
+        font-size="9" fill="${c}" font-weight="700">#${sn}</text>`;
+      if(ph>28){
+        g+=`<text x="${x+pw/2}" y="${y+ph/2-5}" text-anchor="middle"
+          dominant-baseline="middle" font-family="IBM Plex Mono,monospace"
+          font-size="${fs}" fill="${c}" font-weight="500">${esc(pn)}</text>
+        <text x="${x+pw/2}" y="${y+ph/2+9}" text-anchor="middle"
+          dominant-baseline="middle" font-family="IBM Plex Mono,monospace"
+          font-size="${Math.max(6,fs-2)}" fill="${c}99">${p.length}"×${p.width}"</text>`;
+      }else{
+        g+=`<text x="${x+pw/2}" y="${y+ph/2}" text-anchor="middle"
+          dominant-baseline="middle" font-family="IBM Plex Mono,monospace"
+          font-size="${fs}" fill="${c}" font-weight="500">${esc(pn)}</text>`;
+      }
+    }
+    if(p.rotated)
+      g+=`<text x="${x+pw-4}" y="${y+10}" text-anchor="end"
+        font-family="IBM Plex Mono,monospace" font-size="8" fill="${c}88">↺</text>`;
+  }
+  g+=`<text x="${W/2}" y="${H+14}" text-anchor="middle"
+    font-family="IBM Plex Mono,monospace" font-size="10" fill="#666">${r.stock_length}"</text>
+  <text x="${W+14}" y="${H/2}" text-anchor="middle" dominant-baseline="middle"
+    font-family="IBM Plex Mono,monospace" font-size="10" fill="#666"
+    transform="rotate(90 ${W+14} ${H/2})">${r.stock_width}"</text>`;
+  const lbl=r.stock_label||`${r.stock_length}"×${r.stock_width}"`;
+  return `<div class="diagram-board">
+    <div class="diagram-hd">
+      <span style="color:var(--accent);font-weight:500">Board ${idx}: ${esc(lbl)}</span>
+      <span>${r.stock_length}" × ${r.stock_width}"</span>
+      <span class="util-badge ${uc}">${r.utilization.toFixed(1)}% utilized</span>
+      <span style="color:var(--muted)">${r.placed.length} part${r.placed.length!==1?'s':''}</span>
+    </div>
+    <svg class="board-svg" width="${W+30}" height="${H+24}"
+      viewBox="0 0 ${W+30} ${H+24}">${g}</svg></div>`;
+}
+function renderUnplaced(unplaced){
+  const el=document.getElementById('unplaced-list');
+  if(!unplaced||!unplaced.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--success);font-family:var(--mono)">✓ All parts placed!</div>';
+    return;
+  }
+  const grp={};
+  for(const p of unplaced){if(!grp[p.id])grp[p.id]={...p,count:0};grp[p.id].count++;}
+  el.innerHTML=Object.values(grp).map(p=>
+    `<div class="unplaced-item">✕ ${esc(p.name||p.id)} — ${p.length}"×${p.width}" ×${p.count}</div>`
+  ).join('');
+}
+
+// ─── Print ────────────────────────────────────────────────────────────────────
+function printCutList(){
+  if(!lastResult||!lastResult.results.length)return alert('Run the optimizer first.');
+  const now=new Date().toLocaleDateString('en-CA');
+  let h=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kerf Cut List</title>
+<style>
+body{font-family:'IBM Plex Mono',monospace;font-size:11pt;color:#000;padding:20px;}
+h1{font-size:22pt;letter-spacing:4px;margin-bottom:2px;}
+.meta{font-size:9pt;color:#555;margin-bottom:24px;}
+h2{font-size:13pt;margin:20px 0 6px;border-bottom:2px solid #000;padding-bottom:3px;}
+h3{font-size:11pt;margin:14px 0 4px;}
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:10pt;}
+th{background:#111;color:#fff;padding:5px 8px;text-align:left;}
+td{padding:4px 8px;border-bottom:1px solid #ddd;}
+tr:nth-child(even) td{background:#f5f5f5;}
+.g{color:#1a7a3a;font-weight:600;}.o{color:#7a6010;font-weight:600;}
+.r{color:#8a1a1a;font-weight:600;}
+.bd{margin:8px 0 16px;break-inside:avoid;}
+@media print{body{padding:10px;}.bd{page-break-inside:avoid;}}
+</style></head><body>
+<h1>KERF</h1>
+<div class="meta">Generated: ${now} | Kerf: ${getKerf()}" | ${lastResult.total_parts} parts | ${lastResult.results.length} board(s)</div>
+<h2>PARTS LEGEND</h2>
+<table><tr><th>Name</th><th>Length</th><th>Width</th><th>Qty</th><th>Sq Ft</th></tr>`;
+  for(const p of parts)
+    h+=`<tr><td>${esc(p.name)}</td><td>${p.length}"</td><td>${p.width}"</td>
+      <td>${p.qty}</td><td>${(p.length*p.width*p.qty/144).toFixed(2)}</td></tr>`;
+  h+=`</table><h2>CUT INSTRUCTIONS</h2>`;
+  lastResult.results.forEach((r,i)=>{
+    const lbl=r.stock_label||`${r.stock_length}"×${r.stock_width}"`;
+    const uc=r.utilization>=80?'g':r.utilization>=60?'o':'r';
+    h+=`<h3>Board ${i+1}: ${esc(lbl)} <span class="${uc}">${r.utilization.toFixed(1)}% utilized</span></h3>`;
+    const rows=[...r.placed.map((p,pi)=>({...p,_pi:pi}))]
+      .sort((a,b)=>a.y!==b.y?a.y-b.y:a.x-b.x);
+    h+=`<table><tr><th>#</th><th>Name</th><th>Dimensions</th>
+      <th>X from left</th><th>Y from top</th><th>Rotated</th></tr>`;
+    for(const p of rows)
+      h+=`<tr><td><strong>#${serial(i,p._pi)}</strong></td>
+        <td>${esc(p.name||partName(p.part_id))}</td>
+        <td>${p.length}"×${p.width}"</td>
+        <td>${p.x.toFixed(4)}"</td><td>${p.y.toFixed(4)}"</td>
+        <td>${p.rotated?'↺ Yes':'No'}</td></tr>`;
+    h+=`</table>`;
+    const sc=4,W=r.stock_length*sc,H=r.stock_width*sc;
+    let svg=`<rect width="${W}" height="${H}" fill="#f8f4ec" stroke="#888" rx="2"/>`;
+    for(let pi=0;pi<r.placed.length;pi++){
+      const p=r.placed[pi],x=p.x*sc,y=p.y*sc,pw=p.length*sc,ph=p.width*sc;
+      const c=color(p.part_id),fs=Math.min(10,Math.max(6,pw/6));
+      svg+=`<rect x="${x+.5}" y="${y+.5}" width="${pw-1}" height="${ph-1}"
+        fill="${c}33" stroke="${c}" rx="1"/>`;
+      if(pw>16&&ph>12)
+        svg+=`<text x="${x+pw/2}" y="${y+ph/2}" text-anchor="middle"
+          dominant-baseline="middle" font-family="IBM Plex Mono,monospace"
+          font-size="${fs}" fill="${c}" font-weight="700">#${serial(i,pi)}</text>`;
+    }
+    svg+=`<text x="${W/2}" y="${H+12}" text-anchor="middle"
+      font-family="IBM Plex Mono,monospace" font-size="8" fill="#555">${r.stock_length}"</text>`;
+    h+=`<div class="bd"><svg width="${W+30}" height="${H+18}"
+      viewBox="0 0 ${W+30} ${H+18}">${svg}</svg></div>`;
+  });
+  if(lastResult.unplaced?.length){
+    const grp={};
+    for(const p of lastResult.unplaced){if(!grp[p.id])grp[p.id]={...p,count:0};grp[p.id].count++;}
+    h+=`<h2>UNPLACED PARTS</h2>
+    <table><tr><th>Name</th><th>Dimensions</th><th>Count</th></tr>`;
+    for(const p of Object.values(grp))
+      h+=`<tr><td>${esc(p.name||p.id)}</td><td>${p.length}"×${p.width}"</td>
+        <td>${p.count}</td></tr>`;
+    h+=`</table>`;
+  }
+  h+=`</body></html>`;
+  const w=window.open('','_blank');
+  w.document.write(h);w.document.close();w.focus();
+  setTimeout(()=>w.print(),400);
+}
+
+// ─── Import / Export ──────────────────────────────────────────────────────────
+function showImport(){
+  document.getElementById('import-modal').style.display='flex';
+  document.getElementById('import-error').style.display='none';
+  document.getElementById('import-textarea').value='';
+}
+function closeImport(){document.getElementById('import-modal').style.display='none';}
+function handleDrop(e){
+  e.preventDefault();
+  const f=e.dataTransfer.files[0];if(!f)return;
+  const fr=new FileReader();
+  fr.onload=ev=>document.getElementById('import-textarea').value=ev.target.result;
+  fr.readAsText(f);
+}
+function doImport(){
+  const raw=document.getElementById('import-textarea').value.trim();
+  if(!raw){showImportErr('No data entered.');return;}
+  const lines=raw.split(/\r?\n/).filter(l=>l.trim()&&!l.trim().startsWith('#'));
+  const errs=[],ns=[],np=[];
+  for(let i=0;i<lines.length;i++){
+    const cols=lines[i].split(',').map(c=>c.trim());
+    if(cols.length<4){
+      if(i===0&&cols[0].toLowerCase()==='type')continue;
+      errs.push(`Line ${i+1}: need 4+ columns`);continue;
+    }
+    const type=cols[0].toLowerCase(),lbl=cols[1];
+    const len=parseFloat(cols[2]),wid=parseFloat(cols[3]),qty=parseInt(cols[4])||1;
+    if(type==='type')continue;
+    if(!['stock','part'].includes(type)){errs.push(`Line ${i+1}: type must be stock or part`);continue;}
+    if(isNaN(len)||isNaN(wid)||len<=0||wid<=0){errs.push(`Line ${i+1}: invalid dimensions`);continue;}
+    if(type==='stock'){
+      for(let q=0;q<qty;q++)
+        ns.push({id:uid(),label:lbl+(qty>1?` #${q+1}`:''),length:len,width:wid});
+    }else{
+      const id=uid();np.push({id,name:lbl,length:len,width:wid,qty,num:partSeq++});color(id);
+    }
+  }
+  if(errs.length){showImportErr(errs.join('\n'));return;}
+  if(!ns.length&&!np.length){showImportErr('No valid rows found.');return;}
+  stocks.push(...ns);parts.push(...np);
+  renderStockList();renderPartsList();closeImport();
+}
+function showImportErr(msg){
+  const el=document.getElementById('import-error');
+  el.textContent=msg;el.style.display='block';
+}
+function exportCSV(){
+  if(!stocks.length&&!parts.length)return alert('Nothing to export.');
+  const rows=['type,label,length,width,qty'];
+  for(const s of stocks)rows.push(`stock,${s.label.replace(/,/g,'')},${s.length},${s.width},1`);
+  for(const p of parts)rows.push(`part,${p.name.replace(/,/g,'')},${p.length},${p.width},${p.qty}`);
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.join('\n')+'\n');
+  a.download='kerf_export.csv';a.click();
+}
+function downloadSampleCSV(){
+  const csv=`type,label,length,width,qty
+stock,Plywood 4x8,96,48,2
+part,Side Panel,72,11.25,2
+part,Shelf,34.5,11.25,4
+part,Top Panel,36,11.25,2
+part,Back Panel,72,36,1
+part,Toe Kick,34.5,3.5,1
+part,Faceframe Rail,36,2.5,3
+`;
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='kerf_sample.csv';a.click();
+}
+function loadSample(){
+  clearAll();
+  stocks=[
+    {id:uid(),label:'Plywood 4×8 #1',length:96,width:48},
+    {id:uid(),label:'Plywood 4×8 #2',length:96,width:48},
+  ];
+  [{name:'Side Panel',length:72,width:11.25,qty:2},
+   {name:'Shelf',length:34.5,width:11.25,qty:4},
+   {name:'Top/Bottom',length:36,width:11.25,qty:2},
+   {name:'Back Panel',length:72,width:36,qty:1},
+   {name:'Toe Kick',length:34.5,width:3.5,qty:1},
+   {name:'Faceframe Rail',length:36,width:2.5,qty:3},
+  ].forEach(d=>{const id=uid();parts.push({id,...d,num:partSeq++});color(id);});
+  renderStockList();renderPartsList();
+}
+function clearAll(){
+  stocks=[];parts=[];lastResult=null;colorMap={};partSeq=1;serialMap={};
+  renderStockList();renderPartsList();
+  document.getElementById('canvas-content').innerHTML=
+    '<div class="empty-state"><div class="empty-icon">🪵</div><div>Add stock and parts,<br>then click <strong style="color:var(--accent)">Optimize</strong>.</div></div>';
+  document.getElementById('unplaced-list').innerHTML=
+    '<div style="font-size:11px;color:var(--muted);font-family:var(--mono)">Run optimizer to see results.</div>';
+  ['s-total','s-placed','s-unplaced','s-boards','s-util']
+    .forEach(id=>document.getElementById(id).textContent='—');
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();runSolve();}
+  if(e.key==='Escape'){closeImport();closeDrawer();}
+});
+renderStockList();
+renderPartsList();
+</script>
+</body>
+</html>
