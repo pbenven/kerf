@@ -177,15 +177,6 @@ Pull requests and issue reports are welcome.
 
 ---
 
-## Origin
-
-Inspired by the classic **CutList** program by Gary Darby
-(delphiforfun.org, 1993–2018), originally written in Delphi for Windows.
-Kerf reimplements the core concept for Linux using a modern rectangle
-packing algorithm and a browser-based interface.
-
----
-
 ## License
 
 Copyright &copy; 2025 Paolo Benvenuti
