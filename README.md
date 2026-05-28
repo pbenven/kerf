@@ -188,5 +188,17 @@ packing algorithm and a browser-based interface.
 
 ## License
 
-Copyright © 2024 — GNU General Public License v3.0 or later.
-See [LICENSE](LICENSE) for the full text.
+Copyright &copy; 2025 Paolo Benvenuti
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the [GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0.html).
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.
+
+---
+
+## Support This Project
+
+If you find Kerf useful, consider [buying me a coffee](https://www.paypal.com/donate/?business=EV97LDH6TEU5Q&no_recurring=0&currency_code=CAD). ☕

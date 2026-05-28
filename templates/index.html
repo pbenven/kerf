@@ -362,6 +362,7 @@ svg.board-svg{display:block;border-radius:2px;max-width:100%;}
     <button class="btn" onclick="downloadSampleCSV()">⬇ Sample</button>
     <button class="btn" onclick="loadSample()">Sample</button>
     <button class="btn" onclick="clearAll()">Clear</button>
+    <button class="btn" onclick="showAbout()">About</button>
     <button class="btn hdr-keep" onclick="openDrawer()">⚙</button>
     <button class="btn" onclick="printCutList()">🖨 Print</button>
     <button class="btn btn-primary hdr-keep" onclick="runSolve()">▶ Optimize</button>
@@ -557,6 +558,47 @@ svg.board-svg{display:block;border-radius:2px;max-width:100%;}
     <div class="modal-actions">
       <button class="btn" onclick="closeImport()">Cancel</button>
       <button class="btn btn-primary" onclick="doImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- About modal -->
+<div id="about-modal" class="modal-backdrop" style="display:none"
+  onclick="if(event.target===this)closeAbout()">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <h2 style="letter-spacing:4px;margin-bottom:8px">KERF</h2>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:16px">
+      Sheet Goods &amp; Board Optimizer</p>
+    <p style="margin-bottom:12px">
+      A free, open-source cut-list optimizer for woodworkers.<br>
+      Runs locally in Docker — no cloud, no account required.
+    </p>
+    <p style="margin-bottom:8px;font-size:11px;color:var(--text2)">
+      Inspired by the classic CutList program by Gary Darby (Delphi for Fun, 1993–2018).
+    </p>
+    <p style="margin-bottom:20px;font-size:11px;color:var(--text2)">
+      Licensed under the
+      <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank"
+        style="color:var(--accent)">GNU GPL v3</a>.
+      Source on
+      <a href="https://github.com/pbenven/kerf" target="_blank"
+        style="color:var(--accent)">GitHub</a>.
+    </p>
+    <div style="border-top:1px solid var(--border);padding-top:20px;margin-bottom:20px">
+      <p style="margin-bottom:12px;font-size:13px">
+        If you find Kerf useful, consider buying me a coffee. ☕
+      </p>
+      <a href="https://www.paypal.com/donate/?business=EV97LDH6TEU5Q&no_recurring=0&currency_code=CAD"
+        target="_blank"
+        style="display:inline-block;background:var(--accent);color:#000;
+          font-family:var(--mono);font-size:12px;font-weight:700;
+          padding:10px 24px;border-radius:var(--radius);
+          text-decoration:none;text-transform:uppercase;letter-spacing:1px">
+        ☕ Buy Me a Coffee
+      </a>
+    </div>
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn" onclick="closeAbout()">Close</button>
     </div>
   </div>
 </div>
@@ -946,6 +988,8 @@ tr:nth-child(even) td{background:#f5f5f5;}
 }
 
 // ─── Import / Export ──────────────────────────────────────────────────────────
+function showAbout(){document.getElementById('about-modal').style.display='flex';}
+function closeAbout(){document.getElementById('about-modal').style.display='none';}
 function showImport(){
   document.getElementById('import-modal').style.display='flex';
   document.getElementById('import-error').style.display='none';
@@ -1041,7 +1085,7 @@ function clearAll(){
 }
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();runSolve();}
-  if(e.key==='Escape'){closeImport();closeDrawer();}
+  if(e.key==='Escape'){closeImport();closeDrawer();closeAbout();}
 });
 renderStockList();
 renderPartsList();
