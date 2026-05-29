@@ -359,11 +359,10 @@ svg.board-svg{display:block;border-radius:2px;max-width:100%;}
   <div class="header-actions">
     <button class="btn" onclick="showImport()">⬆ Import</button>
     <button class="btn" onclick="exportCSV()">⬇ Export</button>
-    <button class="btn" onclick="downloadSampleCSV()">⬇ Sample</button>
-    <button class="btn" onclick="loadSample()">Sample</button>
+    <button class="btn" onclick="downloadSampleCSV()">⬇ Sample CSV</button>
     <button class="btn" onclick="clearAll()">Clear</button>
     <button class="btn" onclick="showAbout()">About</button>
-    <button class="btn hdr-keep" onclick="openDrawer()">⚙</button>
+    <button class="btn hdr-keep" onclick="openDrawer()">☰</button>
     <button class="btn" onclick="printCutList()">🖨 Print</button>
     <button class="btn btn-primary hdr-keep" onclick="runSolve()">▶ Optimize</button>
   </div>
@@ -495,47 +494,19 @@ svg.board-svg{display:block;border-radius:2px;max-width:100%;}
   </button>
 </nav>
 
-<!-- Settings drawer -->
+<!-- Mobile menu drawer -->
 <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-grip"></div>
-  <h3>SETTINGS</h3>
-  <div class="row2">
-    <div class="field"><label>Kerf (in)</label>
-      <input type="number" id="d-kerf" value="0.125" step="0.0625" min="0"
-        oninput="document.getElementById('kerf').value=this.value"></div>
-    <div class="field"><label>Min waste (in²)</label>
-      <input type="number" id="d-min-waste" value="4" step="0.5" min="0"
-        oninput="document.getElementById('min-waste').value=this.value"></div>
+  <h3>MENU</h3>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn" style="width:100%;padding:12px" onclick="showImport();closeDrawer()">⬆ Import CSV</button>
+    <button class="btn" style="width:100%;padding:12px" onclick="exportCSV();closeDrawer()">⬇ Export CSV</button>
+    <button class="btn" style="width:100%;padding:12px" onclick="downloadSampleCSV();closeDrawer()">⬇ Sample CSV</button>
+    <button class="btn" style="width:100%;padding:12px" onclick="printCutList();closeDrawer()">🖨 Print Cut List</button>
+    <button class="btn" style="width:100%;padding:12px" onclick="showAbout();closeDrawer()">About Kerf</button>
+    <button class="btn btn-danger" style="width:100%;padding:12px" onclick="clearAll();closeDrawer()">Clear All</button>
   </div>
-  <div class="field"><label>Strategy</label>
-    <select id="d-strategy"
-      onchange="document.querySelector('input[name=strategy][value=\''+this.value+'\']').checked=true">
-      <option value="combination">Combination (recommended)</option>
-      <option value="crosscut_first">Cross-cuts first</option>
-      <option value="ripcut_first">Rip-cuts first</option>
-    </select>
-  </div>
-  <div class="field">
-    <label class="radio-row" style="text-transform:none;font-size:14px;cursor:pointer">
-      <input type="checkbox" id="d-rotate" checked
-        style="accent-color:var(--accent);width:auto"
-        onchange="document.getElementById('allow-rotate').checked=this.checked">
-      &nbsp;Allow 90° rotation (ignore grain)
-    </label>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:12px;">
-    <button class="btn" style="flex:1" onclick="showImport();closeDrawer()">⬆ Import</button>
-    <button class="btn" style="flex:1" onclick="exportCSV();closeDrawer()">⬇ Export</button>
-    <button class="btn" style="flex:1" onclick="printCutList();closeDrawer()">🖨 Print</button>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:8px;">
-    <button class="btn" style="flex:1" onclick="loadSample();closeDrawer()">Load Sample</button>
-    <button class="btn btn-danger" style="flex:1" onclick="clearAll();closeDrawer()">Clear All</button>
-  </div>
-  <button class="btn btn-primary"
-    style="width:100%;margin-top:12px;padding:12px"
-    onclick="closeDrawer();runSolve()">▶ Optimize</button>
 </div>
 
 <!-- Import modal -->
@@ -636,10 +607,6 @@ function switchTab(name){
 
 // ─── Drawer ───────────────────────────────────────────────────────────────────
 function openDrawer(){
-  document.getElementById('d-kerf').value=document.getElementById('kerf').value;
-  document.getElementById('d-min-waste').value=document.getElementById('min-waste').value;
-  document.getElementById('d-strategy').value=getStrategy();
-  document.getElementById('d-rotate').checked=getRotate();
   document.getElementById('drawer-backdrop').classList.add('open');
   document.getElementById('drawer').classList.add('open');
 }
