@@ -11,7 +11,7 @@ piece, and can be printed as shop-ready cut instructions.
 Runs entirely locally in a Docker container.  No account, no internet
 connection required after installation.
 
-![Kerf cutting diagram showing two plywood sheets with colour-coded parts](docs/screenshot.svg)
+![Kerf cutting diagram showing colour-coded parts laid out on a plywood sheet](docs/screenshot.png)
 
 ---
 
